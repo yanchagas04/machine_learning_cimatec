@@ -18,6 +18,7 @@ classifiers = [
 dependencies = [
     "fg-data-profiling>=4.19.1",
     "ipython",
+    "ipywidgets>=8.1.8",
     "jupyterlab",
     "loguru",
     "matplotlib",
@@ -25,6 +26,7 @@ dependencies = [
     "notebook",
     "numpy",
     "pandas",
+    "pandera>=0.32.1",
     "pip",
     "pytest",
     "python-dotenv",
