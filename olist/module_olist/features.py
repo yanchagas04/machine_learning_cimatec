@@ -1,29 +1,81 @@
-from pathlib import Path
+from module_olist.dataset import agregate_itens
+from module_olist.dataset import create_target
+import pandas as pd
 
-from loguru import logger
-from tqdm import tqdm
-import typer
+def create_features(data: pd.DataFrame) -> pd.DataFrame:
 
-from module_olist.config import PROCESSED_DATA_DIR
-
-app = typer.Typer()
-
-
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    # -----------------------------------------
-):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Generating features from dataset...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Features generation complete.")
-    # -----------------------------------------
+    data = data.copy()
+    # Calcula quantos dias a empresa prometeu para realizar a entrega,
+    # considerando como início o momento da aprovação do pagamento.
+    data["promised_days"] = (
+        data["order_estimated_delivery_date"]  # Data prometida para a entrega.
+        - data["order_approved_at"]            # Data de aprovação do pagamento.
+    ).dt.total_seconds().div(86_400)          # Converte segundos para dias => 24 * 60 * 60 = 86.400 segundos
 
 
-if __name__ == "__main__":
-    app()
+    # Extrai o número do mês em que a compra foi realizada.
+    # Exemplo: janeiro = 1, fevereiro = 2, ..., dezembro = 12.
+    data["purchase_month"] = (
+        data["order_purchase_timestamp"].dt.month
+    )
+
+
+    # Extrai o dia da semana em que a compra foi realizada.
+    #
+    # O Pandas representa os dias da seguinte forma:
+    # 0 = segunda-feira
+    # 1 = terça-feira
+    # 2 = quarta-feira
+    # 3 = quinta-feira
+    # 4 = sexta-feira
+    # 5 = sábado
+    # 6 = domingo
+    data["purchase_weekday"] = (
+        data["order_purchase_timestamp"].dt.dayofweek
+    )
+
+
+    # Extrai a hora em que a compra foi realizada.
+    # Os valores variam de 0 a 23.
+    #
+    # Exemplo:
+    # 0  = meia-noite
+    # 8  = 8 horas
+    # 14 = 14 horas
+    # 23 = 23 horas
+    data["purchase_hour"] = (
+        data["order_purchase_timestamp"].dt.hour
+    )
+
+    return data
+
+def create_dataset(orders, itens, customers):
+    """
+    Cria o dataset final.
+    
+    Args:
+        orders (pd.DataFrame): Dataframe de pedidos.
+        itens (pd.DataFrame): Dataframe de itens.
+        customers (pd.DataFrame): Dataframe de clientes.
+    
+    Returns:
+        pd.DataFrame: Dataset final.
+    """
+    orders = create_target(orders)
+    items_agg = agregate_itens(itens)
+
+    data = orders.merge(
+        items_agg,
+        on="order_id",
+        how="left",
+        validate="one_to_one"
+    )
+
+    data = data.merge(
+        customers[['customer_id', 'customer_city', 'customer_state']],
+        on="customer_id",
+        how="left",
+        validate="many_to_one"
+    )
+
+    return data
