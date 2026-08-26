@@ -1,9 +1,12 @@
+from module_olist.modeling.evaluate import evaluate_models
 from pathlib import Path
 from loguru import logger
+from sklearn.model_selection import train_test_split
 
 from module_olist.dataset import load_data, save_dataset
 from module_olist.features import create_dataset, create_features
-
+from module_olist.modeling.split import split_data
+from module_olist.modeling.train import train_models
 
 def main():
     """
@@ -48,6 +51,13 @@ def main():
 
     logger.info("Pipeline concluído com sucesso!")
 
+    X_train, X_test, y_train, y_test = split_data(data)
+
+    models = train_models(X_train, y_train)
+
+    evaluate_models(models, X_test, y_test)
+
+    
 
 if __name__ == "__main__":
     main()
