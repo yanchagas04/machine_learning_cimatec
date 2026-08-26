@@ -1,30 +1,41 @@
-from pathlib import Path
-
-from loguru import logger
-from tqdm import tqdm
-import typer
-
-from module_olist.config import MODELS_DIR, PROCESSED_DATA_DIR
-
-app = typer.Typer()
+import pandas as pd
+from module_olist.modeling.pipeline import (
+    create_lightgbm_pipeline,
+    create_xgboost_pipeline,
+    create_gradient_boosting_pipeline
+)
 
 
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    features_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    labels_path: Path = PROCESSED_DATA_DIR / "labels.csv",
-    model_path: Path = MODELS_DIR / "model.pkl",
-    # -----------------------------------------
+class ProbaWrapper:
+    """
+    Wrapper que faz predict_proba retornar apenas a probabilidade da classe
+    positiva (coluna 1), tornando a saída 1D em vez de (n, 2).
+    """
+    def __init__(self, model):
+        self._model = model
+
+    def predict_proba(self, X):
+        return self._model.predict_proba(X)[:, 1]
+
+    def predict(self, X):
+        return self._model.predict(X)
+
+
+def train_models(
+    X_train: pd.DataFrame,
+    y_train: pd.Series
 ):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Training some model...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Modeling training complete.")
-    # -----------------------------------------
 
+    models = {
+        'LightGBM': create_lightgbm_pipeline(),
+        'XGBoost': create_xgboost_pipeline(),
+        'Gradient Boosting': create_gradient_boosting_pipeline()
+    }
 
-if __name__ == "__main__":
-    app()
+    trained_models = {}
+
+    for name, model in models.items():
+        model.fit(X_train, y_train)
+        trained_models[name] = ProbaWrapper(model)
+
+    return trained_models
