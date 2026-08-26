@@ -32,7 +32,7 @@ def create_preprocessor() -> ColumnTransformer:
 
 def create_gradient_boosting_pipeline() -> Pipeline:
     """
-    Create a pipeline that includes preprocessing and training model.
+    Cria uma pipeline que inclui o pré-processamento e o treinamento do modelo utilizando Gradient Boosting.
     """
 
     preprocessor = create_preprocessor()
@@ -73,7 +73,7 @@ def create_xgboost_pipeline() -> Pipeline:
 
 def create_lightgbm_pipeline() -> Pipeline:
     """
-    Create a pipeline that includes preprocessing and training model.
+    Cria uma pipeline que inclui o pré-processamento e o treinamento do modelo.
     """
 
     preprocessor = create_preprocessor()
