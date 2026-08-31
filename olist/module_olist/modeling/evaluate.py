@@ -20,6 +20,7 @@ def evaluate_models(
         best_precision = None
         best_recall = None
 
+        # Busca o threshold que maximiza o F1 no conjunto de teste (hold-out)
         for threshold in np.arange(0.05, 0.50, 0.01):
             y_pred = (y_proba >= threshold).astype(int)
 
@@ -32,14 +33,13 @@ def evaluate_models(
                 best_precision = precision
                 best_recall = recall
                 best_threshold = threshold
-            
-            roc_auc = roc_auc_score(y_test, y_proba)
 
-            logger.info(f"Modelo: {name}")
-            logger.info(f"Melhor threshold: {best_threshold:.2f}")
-            logger.info(f"Precision: {best_precision:.3f}")
-            logger.info(f"Recall: {best_recall:.3f}")
-            logger.info(f"F1: {best_f1:.3f}")
-            logger.info(f"ROC AUC: {roc_auc:.3f}")
-            
-        
+        # ROC-AUC e logs são calculados UMA vez, após encontrar o melhor threshold
+        roc_auc = roc_auc_score(y_test, y_proba)
+
+        logger.info(f"Modelo: {name}")
+        logger.info(f"Melhor threshold: {best_threshold:.2f}")
+        logger.info(f"Precision: {best_precision:.3f}")
+        logger.info(f"Recall: {best_recall:.3f}")
+        logger.info(f"F1: {best_f1:.3f}")
+        logger.info(f"ROC AUC: {roc_auc:.3f}")

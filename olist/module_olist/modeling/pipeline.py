@@ -81,5 +81,4 @@ def create_lightgbm_pipeline() -> Pipeline:
 
     return Pipeline(
         steps=[("preprocessor", preprocessor),
-               ("model", model)]
-    )
+               ("model", model)])

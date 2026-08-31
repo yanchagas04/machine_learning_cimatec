@@ -1,12 +1,12 @@
 from module_olist.modeling.evaluate import evaluate_models
 from pathlib import Path
 from loguru import logger
-from sklearn.model_selection import train_test_split
 
 from module_olist.dataset import load_data, save_dataset
 from module_olist.features import create_dataset, create_features
-from module_olist.modeling.split import split_data
+from module_olist.modeling.split import split_data, FEATURES, TARGET
 from module_olist.modeling.train import train_models
+from module_olist.modeling.cross_validation import cross_validate_models
 
 def main():
     """
@@ -51,13 +51,21 @@ def main():
 
     logger.info("Pipeline concluído com sucesso!")
 
+    # 5. Cross-Validation — avaliação com todos os dados antes do split
+    # Estima a capacidade de generalização de cada modelo de forma robusta.
+    X = data[FEATURES]
+    y = data[TARGET]
+    cross_validate_models(X, y)
+
+    # 6. Split treino/teste (hold-out final)
     X_train, X_test, y_train, y_test = split_data(data)
 
+    # 7. Treinamento final no conjunto de treino
     models = train_models(X_train, y_train)
 
+    # 8. Avaliação no hold-out com busca de threshold ótimo
     evaluate_models(models, X_test, y_test)
 
-    
 
 if __name__ == "__main__":
     main()
