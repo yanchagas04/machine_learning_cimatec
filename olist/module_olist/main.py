@@ -5,7 +5,7 @@ from loguru import logger
 from module_olist.dataset import load_data, save_dataset
 from module_olist.features import create_dataset, create_features
 from module_olist.modeling.split import split_data, FEATURES, TARGET
-from module_olist.modeling.train import train_models
+from module_olist.modeling.train import train_best_model, save_model
 from module_olist.modeling.cross_validation import cross_validate_models
 
 def main():
@@ -24,6 +24,9 @@ def main():
 
     # Caminho de saída
     output_path = project_root / "data" / "interim" / "dataset.csv"
+
+    # Diretório para salvar o modelo treinado
+    models_dir = project_root / "models"
 
     logger.info("Iniciando pipeline de dados...")
 
@@ -51,20 +54,23 @@ def main():
 
     logger.info("Pipeline concluído com sucesso!")
 
-    # 5. Cross-Validation — avaliação com todos os dados antes do split
-    # Estima a capacidade de generalização de cada modelo de forma robusta.
+    # 5. Cross-Validation — avaliação robusta antes do split
+    # Retorna os scores de todos os modelos e o nome do melhor (por ROC AUC médio).
     X = data[FEATURES]
     y = data[TARGET]
-    cross_validate_models(X, y)
+    _, best_name = cross_validate_models(X, y)
 
     # 6. Split treino/teste (hold-out final)
     X_train, X_test, y_train, y_test = split_data(data)
 
-    # 7. Treinamento final no conjunto de treino
-    models = train_models(X_train, y_train)
+    # 7. Treina APENAS o modelo selecionado pela CV
+    best_model = train_best_model(best_name, X_train, y_train)
 
-    # 8. Avaliação no hold-out com busca de threshold ótimo
-    evaluate_models(models, X_test, y_test)
+    # 8. Persiste o modelo treinado em models/<nome>.pkl
+    save_model(best_model, best_name, models_dir)
+
+    # 9. Avaliação no hold-out com busca de threshold ótimo
+    evaluate_models({best_name: best_model}, X_test, y_test)
 
 
 if __name__ == "__main__":

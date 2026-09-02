@@ -6,14 +6,40 @@ from sklearn.model_selection import StratifiedKFold, cross_validate
 from module_olist.modeling.train import get_pipelines
 
 
+def select_best_model(results: dict[str, dict[str, np.ndarray]]) -> str:
+    """
+    Retorna o nome do modelo com maior ROC AUC médio nos folds da CV.
+
+    O ROC AUC é a métrica de referência por ser mais robusta ao
+    desbalanceamento de classes (~8% positivos no dataset Olist).
+
+    Args:
+        results: Dicionário retornado por cross_validate_models.
+
+    Returns:
+        Nome do melhor modelo (chave do dicionário results).
+    """
+    best_name = max(
+        results,
+        key=lambda name: results[name]["test_roc_auc"].mean()
+    )
+    best_auc = results[best_name]["test_roc_auc"].mean()
+    logger.info(
+        f"Melhor modelo: {best_name} "
+        f"(ROC AUC médio = {best_auc:.4f})"
+    )
+    return best_name
+
+
 def cross_validate_models(
     X: pd.DataFrame,
     y: pd.Series,
     n_splits: int = 5,
     random_state: int = 42,
-) -> dict[str, dict[str, np.ndarray]]:
+) -> tuple[dict[str, dict[str, np.ndarray]], str]:
     """
-    Avalia cada pipeline com Stratified K-Fold Cross-Validation.
+    Avalia cada pipeline com Stratified K-Fold Cross-Validation e
+    seleciona o melhor modelo pelo maior ROC AUC médio.
 
     A CV é executada sobre o conjunto completo (X, y) antes do split
     treino/teste, garantindo uma estimativa não-viesada da capacidade de
@@ -26,8 +52,9 @@ def cross_validate_models(
         random_state: Semente para reproduzibilidade.
 
     Returns:
-        Dicionário com os arrays de score por métrica para cada modelo.
-        Exemplo: {"LightGBM": {"test_roc_auc": array([...]), ...}, ...}
+        Tupla (results, best_name):
+        - results: dict com arrays de score por métrica para cada modelo.
+        - best_name: nome do modelo com maior ROC AUC médio.
     """
     cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
 
@@ -73,4 +100,6 @@ def cross_validate_models(
     logger.info("Cross-Validation concluída.")
     logger.info("=" * 60)
 
-    return results
+    best_name = select_best_model(results)
+
+    return results, best_name
