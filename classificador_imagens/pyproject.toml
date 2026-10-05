@@ -1,0 +1,49 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "classificador_imagens"
+version = "0.0.1"
+description = "A short description of the project."
+authors = [
+  { name = "Yan Camp\u00ealo das Chagas" },
+]
+
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    
+]
+dependencies = [
+    "loguru",
+    "matplotlib",
+    "mkdocs",
+    "numpy",
+    "pip",
+    "python-dotenv",
+    "ruff",
+    "scikit-learn",
+    "seaborn",
+    "tensorflow",
+    "torch",
+    "torch-directml",
+    "torchvision",
+    "tqdm",
+    "typer",
+]
+requires-python = "~=3.12.0"
+
+
+[tool.ruff]
+line-length = 99
+src = ["classificador_imagens"]
+include = ["pyproject.toml", "classificador_imagens/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["classificador_imagens"]
+force-sort-within-sections = true
+
