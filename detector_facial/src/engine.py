@@ -32,8 +32,7 @@ class FaceRecognizer:
                 img_path=img_path,
                 db_path=self.authorized_path,
                 enforce_detection=True,
-                model_name="Facenet",
-                detector_backend="opencv",
+                detector_backend="mtcnn",
                 silent=True
                 )
             if len(dfs) > 0 and not dfs[0].empty:
